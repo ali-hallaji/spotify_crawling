@@ -6,8 +6,9 @@ from json import dumps
 from config.settings import CREDENTIALS
 
 
-cred = random.choice(CREDENTIALS)
-get_token = cred[0] + ':' + cred[1]
+if sys.argv[1] != 'generate_settings':
+    cred = random.choice(CREDENTIALS)
+    get_token = cred[0] + ':' + cred[1]
 
 
 usage = """
