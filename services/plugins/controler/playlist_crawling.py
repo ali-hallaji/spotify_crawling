@@ -46,7 +46,7 @@ class PlayListCrawl:
         for doc in playlists:
             data = {}
 
-            if 'id' in doc.get('id', None):
+            if ('id' in doc) and doc['id']:
                 data['playlist_id'] = doc['id']
             else:
                 toLog("{}".format(doc), 'lost_ids')
