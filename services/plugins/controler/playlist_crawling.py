@@ -120,7 +120,7 @@ class PlayListCrawl:
                 )
                 self.save_to_db(response['playlists'].get('items', []))
 
-                while ('playlists' in response) and (response['playlists'].get('next', '')):
+                while response.get('playlists', {}) and (response['playlists'].get('next', '')):
                     if not self.allow_time():
                         return
 
