@@ -1,10 +1,30 @@
 # Core Settings ########################################################
-CORE_NAME = 'Your Name'
-CORE_ID = 'Your Name'
-CORE_PORT = 7095
+CORE_NAME = 'spotify'
+CORE_ID = 'spotify'
+CORE_PORT = 7080
 ########################################################################
 
 # Main settings ########################################################
+CREDENTIALS = [
+    ['admin', '1234'],
+    ['root', '4321']
+]
+########################################################################
+
+# Spotify Config #######################################################
+KEYWORD_DAYS = 15
+PLAYLIST_EXPIRE_TIME = (22, 30)     # (Hour, Min)
+
+CREDENCIAL = [
+    (
+        '7a167751165f4e5e8ebcc724970f7910',
+        '5ffe7c0934c947d3b048b4d968ceded1'
+    ),
+    (
+        '71d62390b02c463dad997e6ce527d102',
+        '14014e506f224ed0a61db58bb71d73d7'
+    )
+]
 ########################################################################
 
 # Debug mode ###########################################################
@@ -18,9 +38,10 @@ DEBUG = True
 ########################################################################
 
 # DB Configuration######################################################
-EXIST_DB = False
-# MONGO_HOST_SELF = 'localhost'
-# MONGO_PORT_SELF = 27017
+EXIST_DB = True
+DB_NAME = 'spotify'
+MONGO_HOST = 'localhost'
+MONGO_PORT = 27017
 ########################################################################
 
 # Threading ############################################################
@@ -33,6 +54,7 @@ main_max_thread = 150
 log_dir = '/var/log/core/{0}/'.format(CORE_ID)
 path_error = '/var/log/core/{0}/error.log'.format(CORE_ID)
 path_object = '/var/log/core/{0}/object.log'.format(CORE_ID)
+path_lost_ids = '/var/log/core/{0}/lost_ids.log'.format(CORE_ID)
 path_service = '/var/log/core/{0}/service.log'.format(CORE_ID)
 path_db = '/var/log/core/{0}/db.log'.format(CORE_ID)
 path_debug = '/var/log/core/{0}/debug.log'.format(CORE_ID)
