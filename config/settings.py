@@ -36,9 +36,10 @@ max_instances = 3
 ########################################################################
 
 # Installed component ##################################################
-component_path = "config/installed_component.json"
-read_component = open(component_path, 'r').read()
-installed_component = [i.encode('utf-8') for i in loads(read_component)]
+installed_component = [
+    "main",
+    "controler"
+]
 ########################################################################
 
 
