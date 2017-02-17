@@ -109,38 +109,38 @@ class PlayListCrawl:
                 toLog("Error while loop: {}".format(doc), 'error')
                 continue
 
-                if 'playlists' in response:
-                    doc['total'] = response['playlists'].get('total', 0)
-                    doc['loops'] = int(ceil(doc['total'] / 50.0))
-                    doc['turn_date'] = now
-                    doc['loop'] = 1
-                    cursor.keywords.update_one(
-                        {'_id': doc['_id']},
-                        {'$set': doc}
-                    )
-                    self.save_to_db(response['playlists'].get('items', []))
+            if 'playlists' in response:
+                doc['total'] = response['playlists'].get('total', 0)
+                doc['loops'] = int(ceil(doc['total'] / 50.0))
+                doc['turn_date'] = now
+                doc['loop'] = 1
+                cursor.keywords.update_one(
+                    {'_id': doc['_id']},
+                    {'$set': doc}
+                )
+                self.save_to_db(response['playlists'].get('items', []))
 
-                    while response['playlists'].get('next', ''):
-                        if not self.allow_time():
-                            return
+                while response['playlists'].get('next', ''):
+                    if not self.allow_time():
+                        return
 
-                        try:
-                            sp = gen_sp()
-                            response = sp.next(response['playlists'])
-                            doc['turn_date'] = now
-                            doc['loop'] += 1
-                            cursor.keywords.update_one(
-                                {'_id': doc['_id']},
-                                {'$set': doc}
-                            )
-                            self.save_to_db(
-                                response['playlists'].get('items', [])
-                            )
-                        except SpotifyException:
-                            continue
+                    try:
+                        sp = gen_sp()
+                        response = sp.next(response['playlists'])
+                        doc['turn_date'] = now
+                        doc['loop'] += 1
+                        cursor.keywords.update_one(
+                            {'_id': doc['_id']},
+                            {'$set': doc}
+                        )
+                        self.save_to_db(
+                            response['playlists'].get('items', [])
+                        )
+                    except SpotifyException:
+                        continue
 
-                        except Exception as e:
-                            toLog("{}".format(e), 'error')
+                    except Exception as e:
+                        toLog("{}".format(e), 'error')
 
 
 PlayListCrawl()
