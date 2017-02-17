@@ -1,0 +1,44 @@
+# Core Settings ########################################################
+CORE_NAME = 'Your Name'
+CORE_ID = 'Your Name'
+CORE_PORT = 7095
+########################################################################
+
+# Main settings ########################################################
+########################################################################
+
+# Debug mode ###########################################################
+AFTER_DONE = True
+BEFORE_DONE = True
+DEBUG_RESULT = True
+########################################################################
+
+# Debug mode ###########################################################
+DEBUG = True
+########################################################################
+
+# DB Configuration######################################################
+EXIST_DB = False
+# MONGO_HOST_SELF = 'localhost'
+# MONGO_PORT_SELF = 27017
+########################################################################
+
+# Threading ############################################################
+background_process_thread_pool = 150
+main_min_thread = 50
+main_max_thread = 150
+########################################################################
+
+# Logging ##############################################################
+log_dir = '/var/log/core/{0}/'.format(CORE_ID)
+path_error = '/var/log/core/{0}/error.log'.format(CORE_ID)
+path_object = '/var/log/core/{0}/object.log'.format(CORE_ID)
+path_service = '/var/log/core/{0}/service.log'.format(CORE_ID)
+path_db = '/var/log/core/{0}/db.log'.format(CORE_ID)
+path_debug = '/var/log/core/{0}/debug.log'.format(CORE_ID)
+path_jobs = '/var/log/core/{0}/jobs.log'.format(CORE_ID)
+path_request = '/var/log/core/{0}/request.log'.format(CORE_ID)
+path_apscheduler = '/var/log/core/{0}/apscheduler.log'.format(CORE_ID)
+max_bytes = 1000000
+backup_count = 10
+########################################################################

@@ -1,0 +1,16 @@
+# Contains requirements common to all environments
+dateutils
+jsonrpclib
+pymongo
+# paramiko
+jdatetime
+twisted
+cerberus
+bcrypt
+apscheduler
+# cryptography
+python-dateutil
+pytz
+pjson
+spotipy
+requests
