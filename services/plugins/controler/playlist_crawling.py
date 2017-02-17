@@ -52,8 +52,8 @@ class PlayListCrawl:
                 toLog("{}".format(doc), 'lost_ids')
                 continue
 
-            doc['name'] = doc.get('name', '').strip()
-            doc['created_date'] = datetime.datetime.now()
+            data['name'] = doc.get('name', '').strip()
+            data['created_date'] = datetime.datetime.now()
             data['href'] = doc.get('href', None)
             data['external_url'] = doc.get('external_urls', {}).get(
                 'spotify', None
