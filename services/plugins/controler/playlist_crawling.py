@@ -43,6 +43,7 @@ class PlayListCrawl:
             return True
 
     def save_to_db(self, playlists):
+        ids = []
         for doc in playlists:
             data = {}
 
@@ -74,6 +75,46 @@ class PlayListCrawl:
                 result.raw_result
             )
             toLog(log, 'db')
+            ids.append(
+                {
+                    'playlist_id': data['playlist_id'],
+                    'owner_id': data['owner_id']
+                }
+            )
+
+        try:
+            sp = gen_sp()
+            self.update_info(ids, sp)
+        except Exception as e:
+            toLog(str(e), 'error')
+
+    def update_info(self, ids, sp):
+        for doc in ids:
+            try:
+                result = sp.user_playlist(
+                    doc['owner_id'],
+                    doc['playlist_id']
+                )
+                _update = {
+                    'modified_date': datetime.datetime.now(),
+                    'description': result.get('description', ''),
+                    'followers': result.get('followers', {}).get('total', 0)
+                }
+                update = cursor.playlist.update_one(
+                    {
+                        'playlist_id': doc['playlist_id'],
+                        'owner_id': doc['owner_id'],
+                    },
+                    {'$set': _update}
+                )
+                msg = "Update Playlist Info: {}".format(update.raw_result)
+                toLog(msg, 'db')
+
+            except SpotifyException as e:
+                toLog(str(e), 'error')
+
+            except Exception as e:
+                toLog(str(e), 'error')
 
     @asynchronous
     def run(self):
