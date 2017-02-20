@@ -15,9 +15,6 @@ from services.plugins.controler.libs.utils import gen_sp
 
 @register
 class PlayListCrawl:
-    """
-        Stop Server
-    """
     __name__ = 'playlist_crawl'
     __namespace__ = 'ControlerComponent'
     __full_name__ = 'controler.playlist_crawl'
