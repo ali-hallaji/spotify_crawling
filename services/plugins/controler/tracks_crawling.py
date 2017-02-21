@@ -60,6 +60,39 @@ class PlayListCrawl:
         else:
             self.set_zero_capped_collection()
 
+    def save_tracks(self, tracks, pl):
+        for per, track in enumerate(tracks, 1):
+            doc = {}
+            if 'track' in track and track['track']:
+
+                artists = ""
+                for artist in track['track'].get('artists', []):
+                    artists += artist['name'] + ", "
+                artists = artists[:-2]
+
+                href = track['track'].get('external_urls', {}).get(
+                    'spotify',
+                    ""
+                )
+                isrc = track['track'].get('external_ids', {}).get('isrc', '')
+
+                doc['song_name'] = track['track'].get('name', "")
+                doc['created_date'] = datetime.datetime.now()
+                doc['playlist_name'] = pl['name']
+                doc['playlist_followers'] = pl['followers']
+                doc['playlist_owner'] = pl['owner_id']
+                doc['playlist_href'] = pl['external_url']
+                doc['playlist_id'] = pl['playlist_id']
+                doc['playlist_description'] = pl['description']
+                doc['artist'] = artists.strip()
+                doc['href'] = href
+                doc['uri'] = track['track'].get('uri', '')
+                doc['song_position'] = per
+                doc['popularity'] = track['track'].get('popularity', 0)
+                doc['isrc'] = isrc
+                doc['allbum'] = track['track'].get('album', {}).get('name', '')
+                doc['song_id'] = track['track'].get('id', '')
+
     @asynchronous
     def run(self, _continue=False):
         if not _continue:
@@ -70,7 +103,23 @@ class PlayListCrawl:
             counter = cursor[CAPPED_NAME].count()
 
         for i in range(counter):
-            data = cursor[CAPPED_NAME].find_one()
+            sort = [("followers", DESCENDING)]
+            doc = cursor[CAPPED_NAME].find_one_and_delete().sort(sort)
+
+            if doc:
+                try:
+                    sp = gen_sp()
+                except Exception as e:
+                    toLog('Spotify API: {}'.format(str(e)), 'error')
+
+                response = sp.user_playlist_tracks(
+                    doc['owner_id'],
+                    doc['playlist_id'],
+                    None,
+                    100,
+                    0
+                )
+                tracks = response.get('items', [])
 
 
 PlayListCrawl()
