@@ -30,6 +30,7 @@ class PlayListCrawl:
         ACL:
             TODO:
     """
+    coll_names = cursor.collection_names()
 
     def allow_time(self):
         now = datetime.datetime.now()
@@ -50,12 +51,11 @@ class PlayListCrawl:
             cursor[CAPPED_NAME].insert(doc)
 
     def set_zero_capped_collection(self):
-        cursor[CAPPED_NAME].remove({})
+        if CAPPED_NAME in self.coll_names:
+            cursor[CAPPED_NAME].remove({})
 
     def create_capped_collection(self):
-        coll_names = cursor.collection_names()
-
-        if CAPPED_NAME not in coll_names:
+        if CAPPED_NAME not in self.coll_names:
             result = cursor.create_collection(
                 CAPPED_NAME,
                 capped=True,
