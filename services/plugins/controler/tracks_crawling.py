@@ -113,7 +113,7 @@ class PlayListCrawl:
 
         for i in range(counter):
             sort = [("followers", DESCENDING)]
-            doc = cursor[CAPPED_NAME].find_one_and_delete().sort(sort)
+            doc = cursor[CAPPED_NAME].find_one_and_delete({}).sort(sort)
 
             if doc:
                 try:
