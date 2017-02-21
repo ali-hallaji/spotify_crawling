@@ -101,6 +101,7 @@ class PlayListCrawl:
                 doc['isrc'] = isrc
                 doc['allbum'] = track['track'].get('album', {}).get('name', '')
                 doc['song_id'] = track['track'].get('id', '')
+                cursor.tracks.insert(doc)
 
     @asynchronous
     def run(self, _continue=False):
