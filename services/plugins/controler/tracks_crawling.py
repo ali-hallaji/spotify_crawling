@@ -51,7 +51,7 @@ class PlayListCrawl:
             cursor[CAPPED_NAME].insert(doc)
 
     def set_zero_capped_collection(self):
-        cursor[CAPPED_NAME].delete_many({})
+        cursor[CAPPED_NAME].drop()
 
     def create_capped_collection(self):
         if CAPPED_NAME not in self.coll_names:
