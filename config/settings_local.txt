@@ -14,7 +14,7 @@ CREDENTIALS = [
 # Spotify Config #######################################################
 KEYWORD_DAYS = 15
 PLAYLIST_EXPIRE_TIME = (22, 30)     # (Hour, Min)
-
+TRACKS_EXPIRE_TIME = (23, 30)     # (Hour, Min)
 CREDENCIAL = [
     (
         '7a167751165f4e5e8ebcc724970f7910',
@@ -42,8 +42,8 @@ EXIST_DB = True
 DB_NAME = 'spotify'
 MONGO_HOST = 'localhost'
 MONGO_PORT = 27017
+CAPPED_NAME = "middle"
 CAPPED_SIZE = 5000
-CAPPED_NAME = 'middle'
 ########################################################################
 
 # Threading ############################################################

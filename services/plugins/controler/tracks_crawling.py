@@ -8,6 +8,7 @@ from core import toLog
 from core.db import cursor
 from config.settings import CAPPED_SIZE
 from config.settings import CAPPED_NAME
+from config.settings import TRACKS_EXPIRE_TIME as TX
 from services.libs.register import register
 from services.libs.async_call import asynchronous
 from services.plugins.controler.libs.utils import gen_sp
@@ -29,6 +30,15 @@ class PlayListCrawl:
         ACL:
             TODO:
     """
+
+    def allow_time(self):
+        now = datetime.datetime.now()
+        expire_time = now.replace(hour=TX[0], minute=TX[1])
+
+        if now >= expire_time:
+            return False
+        else:
+            return True
 
     def fill_capped_collection(self):
         self.create_capped_collection()
@@ -120,6 +130,23 @@ class PlayListCrawl:
                     0
                 )
                 tracks = response.get('items', [])
+                self.save_tracks(tracks, doc)
+
+                one = 'next' in response and response['next'] is not None
+                while one and response.get('next', ''):
+                    if not self.allow_time():
+                        return
+
+                    try:
+                        sp = gen_sp()
+                        response = sp.next(response)
+                        self.save_tracks(response.get('tracks', []), doc)
+
+                    except SpotifyException:
+                        continue
+
+                    except Exception as e:
+                        toLog("{}".format(e), 'error')
 
 
 PlayListCrawl()
