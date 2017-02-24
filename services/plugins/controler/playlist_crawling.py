@@ -76,7 +76,52 @@ class PlayListCrawl:
                 doc['isrc'] = isrc
                 doc['allbum'] = track['track'].get('album', {}).get('name', '')
                 doc['song_id'] = track['track'].get('id', '')
-                cursor.tracks.insert(doc)
+
+                try:
+                    cursor.tracks.insert(doc)
+                    self.check_history(doc)
+                except:
+                    toLog(traceback.format_exc(), 'error')
+
+    def check_history(self, doc):
+        new_doc = doc.copy()
+        new_doc['action_date'] = datetime.datetime.now()
+        last_track = cursor.yesterday.find_one(
+            {
+                'playlist_id': doc['playlist_id'],
+                'song_id': doc['song_id']
+            }
+        )
+        dont_insert = False
+        if last_track:
+            if last_track['song_position'] != new_doc['song_postion']:
+                new_doc['action'] = "Changed"
+                new_doc['old_position'] = last_track['song_position']
+            elif last_track['song_position'] == new_doc['song_postion']:
+                dont_insert = True
+        else:
+            new_doc['action'] = 'Add'
+            new_doc['old_position'] = None
+
+        if not dont_insert:
+            cursor.history.insert(new_doc)
+
+    def drop_action(self):
+        counter = cursor.yesterday.count() + 1
+        for i in range(counter):
+            last_track = cursor.yesterday.find_one_and_delete({})
+            new_track = cursor.tracks.find_one(
+                {
+                    'playlist_id': last_track['playlist_id'],
+                    'song_id': last_track['song_id']
+                }
+            )
+            if not new_track:
+                last_track['action'] = 'Drop'
+                last_track['old_position'] = last_track['song_position']
+                last_track['song_position'] = None
+                last_track['action_date'] = datetime.datetime.now()
+                cursor.history.insert(last_track)
 
     def save_to_db(self, playlists):
         ids = []
@@ -101,16 +146,11 @@ class PlayListCrawl:
             data['owner_id'] = doc.get('owner', {}).get('id', None)
             data['owner_href'] = doc.get('owner', {}).get('href', None)
             data['owner_uri'] = doc.get('owner', {}).get('uri', None)
-            result = cursor.playlist.replace_one(
+            cursor.playlist.replace_one(
                 {'playlist_id': data['playlist_id']},
                 data,
                 upsert=True
             )
-            log = 'Insert: (playlist_id = {}) --result-- {}'.format(
-                data['playlist_id'],
-                result.raw_result
-            )
-            toLog(log, 'db')
             ids.append(data)
 
         try:
@@ -193,6 +233,8 @@ class PlayListCrawl:
         keywords = cursor.keywords.find(criteria)
 
         for doc in keywords:
+            if not self.allow_time():
+                return
             if expected >= doc['turn_date']:
                 # Generate new token
                 sp = self.fetch_sp()
@@ -271,6 +313,9 @@ class PlayListCrawl:
 
         # Start main way
         self.crawl_playlist()
+
+        # Final action
+        self.drop_action()
 
 
 PlayListCrawl()
