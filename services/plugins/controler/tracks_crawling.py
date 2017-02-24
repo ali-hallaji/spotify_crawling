@@ -140,7 +140,7 @@ class PlayListCrawl:
                     try:
                         sp = gen_sp()
                         response = sp.next(response)
-                        self.save_tracks(response.get('tracks', []), doc)
+                        self.save_tracks(response.get('items', []), doc)
 
                     except SpotifyException:
                         continue

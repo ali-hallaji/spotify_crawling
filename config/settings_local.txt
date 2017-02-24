@@ -13,6 +13,7 @@ CREDENTIALS = [
 
 # Spotify Config #######################################################
 KEYWORD_DAYS = 15
+FOLLOWERS_CONDS = 250
 PLAYLIST_EXPIRE_TIME = (22, 30)     # (Hour, Min)
 TRACKS_EXPIRE_TIME = (23, 30)     # (Hour, Min)
 CREDENCIAL = [

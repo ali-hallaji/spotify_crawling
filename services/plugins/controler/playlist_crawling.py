@@ -1,6 +1,10 @@
 # python import
+import time
 import datetime
+import traceback
 from math import ceil
+from pymongo import ASCENDING
+from pymongo import DESCENDING
 from spotipy.client import SpotifyException
 
 # Core Services import
@@ -9,6 +13,7 @@ from core.db import cursor
 from config.settings import KEYWORD_DAYS
 from services.libs.register import register
 from config.settings import PLAYLIST_EXPIRE_TIME as PX
+from config.settings import FOLLOWERS_CONDS
 from services.libs.async_call import asynchronous
 from services.plugins.controler.libs.utils import gen_sp
 
@@ -38,6 +43,40 @@ class PlayListCrawl:
             return False
         else:
             return True
+
+    def save_tracks(self, tracks, pl):
+        for per, track in enumerate(tracks, 1):
+            doc = {}
+            if 'track' in track and track['track']:
+
+                artists = ""
+                for artist in track['track'].get('artists', []):
+                    artists += artist['name'] + ", "
+                artists = artists[:-2]
+
+                href = track['track'].get('external_urls', {}).get(
+                    'spotify',
+                    ""
+                )
+                isrc = track['track'].get('external_ids', {}).get('isrc', '')
+
+                doc['song_name'] = track['track'].get('name', "")
+                doc['created_date'] = datetime.datetime.now()
+                doc['playlist_name'] = pl['name']
+                doc['playlist_followers'] = pl['followers']
+                doc['playlist_owner'] = pl['owner_id']
+                doc['playlist_href'] = pl['external_url']
+                doc['playlist_id'] = pl['playlist_id']
+                doc['playlist_description'] = pl['description']
+                doc['artist'] = artists.strip()
+                doc['href'] = href
+                doc['uri'] = track['track'].get('uri', '')
+                doc['song_position'] = per
+                doc['popularity'] = track['track'].get('popularity', 0)
+                doc['isrc'] = isrc
+                doc['allbum'] = track['track'].get('album', {}).get('name', '')
+                doc['song_id'] = track['track'].get('id', '')
+                cursor.tracks.insert(doc)
 
     def save_to_db(self, playlists):
         ids = []
@@ -72,52 +111,82 @@ class PlayListCrawl:
                 result.raw_result
             )
             toLog(log, 'db')
-            ids.append(
-                {
-                    'playlist_id': data['playlist_id'],
-                    'owner_id': data['owner_id']
-                }
-            )
+            ids.append(data)
 
         try:
-            sp = gen_sp()
-            self.update_info(ids, sp)
-        except Exception as e:
-            toLog(str(e), 'error')
+            # Start Update info Playlist
+            self.update_info(ids)
+        except:
+            toLog(traceback.format_exc(), 'error')
 
-    def update_info(self, ids, sp):
+    def move_to_yesterday(self):
+        cursor.yesterday.delete_many({})
+        data = cursor.tracks.find({}, {'_id': 0})
+        for doc in data:
+            cursor.yesterday.insert(doc)
+        cursor.tracks.delete_many({})
+        self.ensure_indexes()
+        return True
+
+    def fetch_sp(self):
+        while True:
+            try:
+                time.sleep(1)
+                sp = gen_sp()
+                return sp
+            except:
+                toLog(traceback.format_exc(), 'error')
+
+    def update_info(self, ids):
         for doc in ids:
+            sp = self.fetch_sp()
+
             try:
                 result = sp.user_playlist(
                     doc['owner_id'],
                     doc['playlist_id']
                 )
+                followers = result.get('followers', {}).get('total', 0)
                 _update = {
                     'modified_date': datetime.datetime.now(),
                     'description': result.get('description', ''),
-                    'followers': result.get('followers', {}).get('total', 0)
+                    'followers': followers
                 }
-                update = cursor.playlist.update_one(
+                cursor.playlist.update_one(
                     {
                         'playlist_id': doc['playlist_id'],
                         'owner_id': doc['owner_id'],
                     },
                     {'$set': _update}
                 )
-                msg = "Update Playlist Info: {}".format(update.raw_result)
-                toLog(msg, 'db')
 
-            except SpotifyException as e:
-                toLog(str(e), 'error')
+                if followers >= FOLLOWERS_CONDS:
+                    if 'tracks' in result:
+                        doc['followers'] = followers
+                        doc['description'] = result.get('description', '')
+                        if result['tracks'].get('items', []):
+                            self.save_tracks(result['tracks']['items'], doc)
 
-            except Exception as e:
-                toLog(str(e), 'error')
+                        response = result['tracks']
+                        while response.get('next', ''):
+                            try:
+                                response = sp.next(response)
+                                tracks = response.get('items', [])
+                                self.save_tracks(tracks, doc)
 
-    @asynchronous
-    def run(self):
-        if not self.allow_time():
-            return
+                            except SpotifyException:
+                                continue
 
+                            except Exception as e:
+                                toLog("{}".format(e), 'error')
+
+            except SpotifyException:
+                toLog(traceback.format_exc(), 'error')
+
+            except:
+                toLog(traceback.format_exc(), 'error')
+
+    def crawl_playlist(self):
         now = datetime.datetime.now()
         expected = now - datetime.timedelta(days=KEYWORD_DAYS)
         criteria = {}
@@ -126,7 +195,7 @@ class PlayListCrawl:
         for doc in keywords:
             if expected >= doc['turn_date']:
                 # Generate new token
-                sp = gen_sp()
+                sp = self.fetch_sp()
                 response = sp.search(
                     q=doc['word'],
                     limit=50,
@@ -136,7 +205,7 @@ class PlayListCrawl:
 
             elif doc['loop'] < doc['loops']:
                 # Generate new token
-                sp = gen_sp()
+                sp = self.fetch_sp()
                 response = sp.search(
                     q=doc['word'],
                     limit=50,
@@ -158,13 +227,13 @@ class PlayListCrawl:
                 )
                 self.save_to_db(response['playlists'].get('items', []))
 
-                one = 'playlists' in response and response['playlists'] is not None
+                one = response.get('playlists', {}) is not None
                 while one and response['playlists'].get('next', ''):
                     if not self.allow_time():
                         return
 
                     try:
-                        sp = gen_sp()
+                        sp = self.fetch_sp()
                         response = sp.next(response['playlists'])
                         doc['turn_date'] = now
                         doc['loop'] += 1
@@ -176,10 +245,32 @@ class PlayListCrawl:
                             response['playlists'].get('items', [])
                         )
                     except SpotifyException:
+                        toLog(traceback.format_exc(), 'error')
                         continue
 
-                    except Exception as e:
-                        toLog("{}".format(e), 'error')
+                    except:
+                        toLog(traceback.format_exc(), 'error')
+
+    def ensure_indexes(self):
+        cursor.yesterday.create_index(
+            [('playlist_id', DESCENDING), ('song_id', ASCENDING)]
+        )
+        cursor.tracks.create_index(
+            [('playlist_id', DESCENDING), ('song_id', ASCENDING)]
+        )
+
+    @asynchronous
+    def run(self):
+        # If the now time reach to expire time
+        if not self.allow_time():
+            return
+
+        # Move tracks to Yesterday
+        if not self.move_to_yesterday():
+            return
+
+        # Start main way
+        self.crawl_playlist()
 
 
 PlayListCrawl()
