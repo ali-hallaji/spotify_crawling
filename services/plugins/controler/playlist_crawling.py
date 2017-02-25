@@ -94,10 +94,10 @@ class PlayListCrawl:
         )
         dont_insert = False
         if last_track:
-            if last_track['song_position'] != new_doc['song_postion']:
+            if last_track['song_position'] != new_doc['song_position']:
                 new_doc['action'] = "Changed"
                 new_doc['old_position'] = last_track['song_position']
-            elif last_track['song_position'] == new_doc['song_postion']:
+            elif last_track['song_position'] == new_doc['song_position']:
                 dont_insert = True
         else:
             new_doc['action'] = 'Add'
@@ -110,18 +110,20 @@ class PlayListCrawl:
         counter = cursor.yesterday.count() + 1
         for i in range(counter):
             last_track = cursor.yesterday.find_one_and_delete({})
-            new_track = cursor.tracks.find_one(
-                {
-                    'playlist_id': last_track['playlist_id'],
-                    'song_id': last_track['song_id']
-                }
-            )
-            if not new_track:
-                last_track['action'] = 'Drop'
-                last_track['old_position'] = last_track['song_position']
-                last_track['song_position'] = None
-                last_track['action_date'] = datetime.datetime.now()
-                cursor.history.insert(last_track)
+
+            if last_track:
+                new_track = cursor.tracks.find_one(
+                    {
+                        'playlist_id': last_track['playlist_id'],
+                        'song_id': last_track['song_id']
+                    }
+                )
+                if not new_track:
+                    last_track['action'] = 'Drop'
+                    last_track['old_position'] = last_track['song_position']
+                    last_track['song_position'] = None
+                    last_track['action_date'] = datetime.datetime.now()
+                    cursor.history.insert(last_track)
 
     def save_to_db(self, playlists):
         ids = []
