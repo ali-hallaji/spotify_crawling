@@ -272,7 +272,11 @@ class PlayListCrawl:
                 self.save_to_db(response['playlists'].get('items', []))
 
                 one = response.get('playlists', {}) is not None
+                loop_counter = 0
                 while one and response['playlists'].get('next', ''):
+                    if loop_counter == 20:
+                        break
+
                     if not self.allow_time():
                         return
 
@@ -294,6 +298,8 @@ class PlayListCrawl:
 
                     except:
                         toLog(traceback.format_exc(), 'error')
+
+                    loop_counter += 1
 
     def ensure_indexes(self):
         cursor.yesterday.create_index(
