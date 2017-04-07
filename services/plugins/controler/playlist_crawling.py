@@ -274,7 +274,7 @@ class PlayListCrawl:
                 one = response.get('playlists', {}) is not None
                 loop_counter = 0
                 while one and response['playlists'].get('next', ''):
-                    if loop_counter == 20:
+                    if loop_counter == 5:
                         break
 
                     if not self.allow_time():
