@@ -290,7 +290,7 @@ class PlayListCrawl:
                             {'$set': doc}
                         )
                         self.save_to_db(
-                            response['playlists'].get('items', [])
+                            response.get('playlists', {}).get('items', [])
                         )
                     except SpotifyException:
                         toLog(traceback.format_exc(), 'error')
