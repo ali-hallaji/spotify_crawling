@@ -271,7 +271,7 @@ class PlayListCrawl:
                 )
                 self.save_to_db(response['playlists'].get('items', []))
 
-                one = response.get('playlists', {}) is not None
+                one = response is not None
                 loop_counter = 0
                 while one and response.get('playlists', {}).get('next', ''):
                     if loop_counter == 5:
