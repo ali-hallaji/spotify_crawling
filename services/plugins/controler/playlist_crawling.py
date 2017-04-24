@@ -129,32 +129,35 @@ class PlayListCrawl:
         ids = []
         for doc in playlists:
             data = {}
+            try:
+                if ('id' in doc) and doc['id']:
+                    data['playlist_id'] = doc['id']
+                else:
+                    toLog("{}".format(doc), 'lost_ids')
+                    continue
 
-            if ('id' in doc) and doc['id']:
-                data['playlist_id'] = doc['id']
-            else:
-                toLog("{}".format(doc), 'lost_ids')
-                continue
+                data['name'] = doc.get('name', '').strip()
+                data['created_date'] = datetime.datetime.now()
+                data['href'] = doc.get('href', None)
+                data['external_url'] = doc.get('external_urls', {}).get(
+                    'spotify', None
+                )
+                data['uri'] = doc.get('uri', None)
+                data['owner_external_url'] = doc.get('owner', {}).get(
+                    'external_urls', {}).get('spotify', None)
+                data['owner_id'] = doc.get('owner', {}).get('id', None)
+                data['owner_href'] = doc.get('owner', {}).get('href', None)
+                data['owner_uri'] = doc.get('owner', {}).get('uri', None)
+                cursor.playlist.replace_one(
+                    {'playlist_id': data['playlist_id']},
+                    data,
+                    upsert=True
+                )
+                ids.append(data)
 
-            data['name'] = doc.get('name', '').strip()
-            data['created_date'] = datetime.datetime.now()
-            data['href'] = doc.get('href', None)
-            data['external_url'] = doc.get('external_urls', {}).get(
-                'spotify', None
-            )
-            data['uri'] = doc.get('uri', None)
-            data['owner_external_url'] = doc.get('owner', {}).get(
-                'external_urls', {}).get('spotify', None)
-            data['owner_id'] = doc.get('owner', {}).get('id', None)
-            data['owner_href'] = doc.get('owner', {}).get('href', None)
-            data['owner_uri'] = doc.get('owner', {}).get('uri', None)
-            cursor.playlist.replace_one(
-                {'playlist_id': data['playlist_id']},
-                data,
-                upsert=True
-            )
-            ids.append(data)
-
+            except AttributeError:
+                pass
+        
         try:
             # Start Update info Playlist
             self.update_info(ids)
