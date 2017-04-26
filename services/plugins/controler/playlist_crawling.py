@@ -284,6 +284,10 @@ class PlayListCrawl:
 
                 one = response is not None
                 loop_counter = 0
+                
+                if not response['playlists']:
+                    response['playlists'] = {}
+                
                 while one and response.get('playlists', {}).get('next', ''):
                     if loop_counter >= 2:
                         break
