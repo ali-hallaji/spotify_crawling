@@ -136,7 +136,11 @@ class PlayListCrawl:
                     toLog("{}".format(doc), 'lost_ids')
                     continue
 
-                data['name'] = doc.get('name', '').strip()
+                try:
+                    data['name'] = doc.get('name', '').strip()
+                except AttributeError:
+                    data['name'] = ''
+                    
                 data['created_date'] = datetime.datetime.now()
                 data['href'] = doc.get('href', None)
                 data['external_url'] = doc.get('external_urls', {}).get(
