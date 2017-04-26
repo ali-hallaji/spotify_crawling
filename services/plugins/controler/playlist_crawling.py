@@ -195,6 +195,9 @@ class PlayListCrawl:
                     doc['owner_id'],
                     doc['playlist_id']
                 )
+                if not result:
+                    return
+                
                 followers = result.get('followers', {}).get('total', 0)
                 _update = {
                     'modified_date': datetime.datetime.now(),
