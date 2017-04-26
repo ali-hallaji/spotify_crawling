@@ -249,25 +249,26 @@ class PlayListCrawl:
                 return
             if expected >= doc['turn_date']:
                 # Generate new token
-                sp = self.fetch_sp()
-                response = sp.search(
-                    q=doc['word'],
-                    limit=50,
-                    type='playlist',
-                    offset=0
-                )
+                if doc['loop'] <= 1:
+                    sp = self.fetch_sp()
+                    response = sp.search(
+                        q=doc['word'],
+                        limit=50,
+                        type='playlist',
+                        offset=0
+                    )
 
-            elif doc['loop'] < doc['loops']:
-                # Generate new token
-                sp = self.fetch_sp()
-                response = sp.search(
-                    q=doc['word'],
-                    limit=50,
-                    type='playlist',
-                    offset=(50 * int(doc['loop']))
-                )
+                elif doc['loop'] < doc['loops']:
+                    # Generate new token
+                    sp = self.fetch_sp()
+                    response = sp.search(
+                        q=doc['word'],
+                        limit=50,
+                        type='playlist',
+                        offset=(50 * int(doc['loop']))
+                    )
             else:
-                toLog("Error while loop: {}".format(doc), 'error')
+                toLog("Out of turn date: {}".format(doc), 'error')
                 continue
 
             if 'playlists' in response:
@@ -284,8 +285,10 @@ class PlayListCrawl:
                 one = response is not None
                 loop_counter = 0
                 while one and response.get('playlists', {}).get('next', ''):
-                    if loop_counter == 5:
+                    if loop_counter >= 2:
                         break
+                    else:
+                        loop_counter += 1
 
                     if not self.allow_time():
                         return
@@ -308,8 +311,6 @@ class PlayListCrawl:
 
                     except:
                         toLog(traceback.format_exc(), 'error')
-
-                    loop_counter += 1
 
     def ensure_indexes(self):
         cursor.yesterday.create_index(
