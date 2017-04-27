@@ -271,7 +271,7 @@ class PlayListCrawl:
                 toLog("Out of turn date: {}".format(doc), 'error')
                 continue
 
-            if 'playlists' in response:
+            if response and ('playlists' in response):
                 doc['total'] = response['playlists'].get('total', 0)
                 doc['loops'] = int(ceil(doc['total'] / 50.0))
                 doc['turn_date'] = now
