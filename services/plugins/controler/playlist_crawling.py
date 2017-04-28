@@ -289,7 +289,7 @@ class PlayListCrawl:
                     response['playlists'] = {}
                 
                 while one and response.get('playlists', {}).get('next', ''):
-                    if loop_counter >= 2:
+                    if loop_counter >= 5:
                         break
                     else:
                         loop_counter += 1
