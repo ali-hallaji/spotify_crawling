@@ -45,9 +45,11 @@ class PlayListCrawl:
             return True
 
     def save_tracks(self, tracks, pl):
+        print 1
         for per, track in enumerate(tracks, 1):
             doc = {}
             if 'track' in track and track['track']:
+                print 2
 
                 artists = ""
                 for artist in track['track'].get('artists', []):
@@ -213,7 +215,9 @@ class PlayListCrawl:
                 )
 
                 if followers >= FOLLOWERS_CONDS:
+                    print 33
                     if 'tracks' in result:
+                        print 44
                         doc['followers'] = followers
                         doc['description'] = result.get('description', '')
                         if result['tracks'].get('items', []):
