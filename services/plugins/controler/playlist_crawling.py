@@ -244,18 +244,15 @@ class PlayListCrawl:
                 toLog(traceback.format_exc(), 'error')
 
     def crawl_playlist(self):
-        print 110000
         now = datetime.datetime.now()
         expected = now - datetime.timedelta(days=KEYWORD_DAYS)
         criteria = {}
         keywords = cursor.keywords.find(criteria)
-        print 110000
 
         for doc in keywords:
-            print 220000
             if not self.allow_time():
                 return
-            print 330000
+
             if expected >= doc['turn_date']:
                 print 440000
                 response = None
@@ -281,7 +278,7 @@ class PlayListCrawl:
                         offset=(50 * int(doc['loop']))
                     )
 
-                if response and ('playlists' in response):
+                if response:
                     print 770000
                     doc['total'] = response['playlists'].get('total', 0)
                     doc['loops'] = int(ceil(doc['total'] / 50.0))
