@@ -78,6 +78,7 @@ class PlayListCrawl:
                 doc['song_id'] = track['track'].get('id', '')
 
                 try:
+                    print 2222
                     cursor.tracks.insert(doc)
                     self.check_history(doc)
                 except:
@@ -203,6 +204,7 @@ class PlayListCrawl:
                 )
 
                 if followers >= FOLLOWERS_CONDS:
+                    print 11111
                     if 'tracks' in result:
                         doc['followers'] = followers
                         doc['description'] = result.get('description', '')
