@@ -337,14 +337,14 @@ class PlayListCrawl:
         # If the now time reach to expire time
         if not self.allow_time():
             return
-
+        print 10000000
         # Move tracks to Yesterday
         if not self.move_to_yesterday():
             return
-
+        print 10000000
         # Start main way
         self.crawl_playlist()
-
+        print 10000000
         # Final action
         self.drop_action()
 
