@@ -260,12 +260,14 @@ class PlayListCrawl:
                 if doc['loop'] <= 1:
                     print 550000
                     sp = self.fetch_sp()
+                    print sp
                     response = sp.search(
                         q=doc['word'],
                         limit=50,
                         type='playlist',
                         offset=0
                     )
+                    print response
 
                 elif doc['loop'] < doc['loops']:
                     # Generate new token
@@ -277,8 +279,6 @@ class PlayListCrawl:
                         type='playlist',
                         offset=(50 * int(doc['loop']))
                     )
-                else:
-                    print 900000000000
 
                 if response:
                     print 770000
