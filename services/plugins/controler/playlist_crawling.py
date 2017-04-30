@@ -271,54 +271,55 @@ class PlayListCrawl:
                         type='playlist',
                         offset=(50 * int(doc['loop']))
                     )
+                    
+                if response and ('playlists' in response):
+                    doc['total'] = response['playlists'].get('total', 0)
+                    doc['loops'] = int(ceil(doc['total'] / 50.0))
+                    doc['turn_date'] = now
+                    doc['loop'] = 1
+                    cursor.keywords.update_one(
+                        {'_id': doc['_id']},
+                        {'$set': doc}
+                    )
+                    self.save_to_db(response['playlists'].get('items', []))
+
+                    one = response is not None
+                    loop_counter = 0
+
+                    if not response['playlists']:
+                        response['playlists'] = {}
+
+                    while one and response.get('playlists', {}).get('next', ''):
+                        if loop_counter >= 5:
+                            break
+                        else:
+                            loop_counter += 1
+
+                        if not self.allow_time():
+                            return
+
+                        try:
+                            sp = self.fetch_sp()
+                            response = sp.next(response['playlists'])
+                            doc['turn_date'] = now
+                            doc['loop'] += 1
+                            cursor.keywords.update_one(
+                                {'_id': doc['_id']},
+                                {'$set': doc}
+                            )
+                            self.save_to_db(
+                                response.get('playlists', {}).get('items', [])
+                            )
+                        except SpotifyException:
+                            toLog(traceback.format_exc(), 'error')
+                            continue
+
+                        except:
+                            toLog(traceback.format_exc(), 'error')   
+               
             else:
                 toLog("Out of turn date: {}".format(doc), 'error')
                 continue
-
-            if response and ('playlists' in response):
-                doc['total'] = response['playlists'].get('total', 0)
-                doc['loops'] = int(ceil(doc['total'] / 50.0))
-                doc['turn_date'] = now
-                doc['loop'] = 1
-                cursor.keywords.update_one(
-                    {'_id': doc['_id']},
-                    {'$set': doc}
-                )
-                self.save_to_db(response['playlists'].get('items', []))
-
-                one = response is not None
-                loop_counter = 0
-                
-                if not response['playlists']:
-                    response['playlists'] = {}
-                
-                while one and response.get('playlists', {}).get('next', ''):
-                    if loop_counter >= 5:
-                        break
-                    else:
-                        loop_counter += 1
-
-                    if not self.allow_time():
-                        return
-
-                    try:
-                        sp = self.fetch_sp()
-                        response = sp.next(response['playlists'])
-                        doc['turn_date'] = now
-                        doc['loop'] += 1
-                        cursor.keywords.update_one(
-                            {'_id': doc['_id']},
-                            {'$set': doc}
-                        )
-                        self.save_to_db(
-                            response.get('playlists', {}).get('items', [])
-                        )
-                    except SpotifyException:
-                        toLog(traceback.format_exc(), 'error')
-                        continue
-
-                    except:
-                        toLog(traceback.format_exc(), 'error')
 
     def ensure_indexes(self):
         cursor.yesterday.create_index(
