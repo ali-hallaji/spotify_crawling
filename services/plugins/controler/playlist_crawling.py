@@ -183,7 +183,7 @@ class PlayListCrawl:
     def fetch_sp(self):
         while True:
             try:
-                time.sleep(1)
+                time.sleep(1.5)
                 sp = gen_sp()
                 return sp
             except:
@@ -277,6 +277,8 @@ class PlayListCrawl:
                         type='playlist',
                         offset=(50 * int(doc['loop']))
                     )
+                else:
+                    print 900000000000
 
                 if response:
                     print 770000
@@ -325,7 +327,6 @@ class PlayListCrawl:
                             toLog(traceback.format_exc(), 'error')
 
             else:
-                print 'OUTTTTTTT!!!!!!'
                 toLog("Out of turn date: {}".format(doc), 'error')
                 continue
 
