@@ -244,14 +244,18 @@ class PlayListCrawl:
                 toLog(traceback.format_exc(), 'error')
 
     def crawl_playlist(self):
+        print 110000
         now = datetime.datetime.now()
         expected = now - datetime.timedelta(days=KEYWORD_DAYS)
         criteria = {}
         keywords = cursor.keywords.find(criteria)
+        print 110000
 
         for doc in keywords:
+            print 220000
             if not self.allow_time():
                 return
+            print 330000
             if expected >= doc['turn_date']:
                 response = None
 
