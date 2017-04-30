@@ -325,6 +325,7 @@ class PlayListCrawl:
                             toLog(traceback.format_exc(), 'error')
 
             else:
+                print 'OUTTTTTTT!!!!!!'
                 toLog("Out of turn date: {}".format(doc), 'error')
                 continue
 
