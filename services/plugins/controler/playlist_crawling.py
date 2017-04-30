@@ -257,9 +257,11 @@ class PlayListCrawl:
                 return
             print 330000
             if expected >= doc['turn_date']:
+                print 440000
                 response = None
 
                 if doc['loop'] <= 1:
+                    print 550000
                     sp = self.fetch_sp()
                     response = sp.search(
                         q=doc['word'],
@@ -270,6 +272,7 @@ class PlayListCrawl:
 
                 elif doc['loop'] < doc['loops']:
                     # Generate new token
+                    print 660000
                     sp = self.fetch_sp()
                     response = sp.search(
                         q=doc['word'],
@@ -279,6 +282,7 @@ class PlayListCrawl:
                     )
 
                 if response and ('playlists' in response):
+                    print 770000
                     doc['total'] = response['playlists'].get('total', 0)
                     doc['loops'] = int(ceil(doc['total'] / 50.0))
                     doc['turn_date'] = now
