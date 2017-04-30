@@ -252,7 +252,8 @@ class PlayListCrawl:
             if not self.allow_time():
                 return
             if expected >= doc['turn_date']:
-                # Generate new token
+                response = None
+                
                 if doc['loop'] <= 1:
                     sp = self.fetch_sp()
                     response = sp.search(
