@@ -254,24 +254,19 @@ class PlayListCrawl:
                 return
 
             if expected >= doc['turn_date']:
-                print 440000
                 response = None
 
                 if doc['loop'] <= 1:
-                    print 550000
                     sp = self.fetch_sp()
-                    print sp
                     response = sp.search(
                         q=doc['word'],
                         limit=50,
                         type='playlist',
                         offset=0
                     )
-                    print response
 
                 elif doc['loop'] < doc['loops']:
                     # Generate new token
-                    print 660000
                     sp = self.fetch_sp()
                     response = sp.search(
                         q=doc['word'],
@@ -281,7 +276,6 @@ class PlayListCrawl:
                     )
 
                 if response:
-                    print 770000
                     doc['total'] = response['playlists'].get('total', 0)
                     doc['loops'] = int(ceil(doc['total'] / 50.0))
                     doc['turn_date'] = now
@@ -340,18 +334,14 @@ class PlayListCrawl:
 
     @asynchronous
     def run(self):
-        print 10000000
         # If the now time reach to expire time
         if not self.allow_time():
             return
-        print 10000000
         # Move tracks to Yesterday
         if not self.move_to_yesterday():
             return
-        print 10000000
         # Start main way
         self.crawl_playlist()
-        print 10000000
         # Final action
         self.drop_action()
 
