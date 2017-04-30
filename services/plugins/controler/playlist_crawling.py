@@ -45,9 +45,11 @@ class PlayListCrawl:
             return True
 
     def save_tracks(self, tracks, pl):
+        print 1
         for per, track in enumerate(tracks, 1):
             doc = {}
             if 'track' in track and track['track']:
+                print 2
 
                 artists = ""
                 for artist in track['track'].get('artists', []):
@@ -130,31 +132,38 @@ class PlayListCrawl:
         ids = []
         for doc in playlists:
             data = {}
+            try:
+                if ('id' in doc) and doc['id']:
+                    data['playlist_id'] = doc['id']
+                else:
+                    toLog("{}".format(doc), 'lost_ids')
+                    continue
 
-            if ('id' in doc) and doc['id']:
-                data['playlist_id'] = doc['id']
-            else:
-                toLog("{}".format(doc), 'lost_ids')
-                continue
+                try:
+                    data['name'] = doc.get('name', '').strip()
+                except AttributeError:
+                    data['name'] = ''
 
-            data['name'] = doc.get('name', '').strip()
-            data['created_date'] = datetime.datetime.now()
-            data['href'] = doc.get('href', None)
-            data['external_url'] = doc.get('external_urls', {}).get(
-                'spotify', None
-            )
-            data['uri'] = doc.get('uri', None)
-            data['owner_external_url'] = doc.get('owner', {}).get(
-                'external_urls', {}).get('spotify', None)
-            data['owner_id'] = doc.get('owner', {}).get('id', None)
-            data['owner_href'] = doc.get('owner', {}).get('href', None)
-            data['owner_uri'] = doc.get('owner', {}).get('uri', None)
-            cursor.playlist.replace_one(
-                {'playlist_id': data['playlist_id']},
-                data,
-                upsert=True
-            )
-            ids.append(data)
+                data['created_date'] = datetime.datetime.now()
+                data['href'] = doc.get('href', None)
+                data['external_url'] = doc.get('external_urls', {}).get(
+                    'spotify', None
+                )
+                data['uri'] = doc.get('uri', None)
+                data['owner_external_url'] = doc.get('owner', {}).get(
+                    'external_urls', {}).get('spotify', None)
+                data['owner_id'] = doc.get('owner', {}).get('id', None)
+                data['owner_href'] = doc.get('owner', {}).get('href', None)
+                data['owner_uri'] = doc.get('owner', {}).get('uri', None)
+                cursor.playlist.replace_one(
+                    {'playlist_id': data['playlist_id']},
+                    data,
+                    upsert=True
+                )
+                ids.append(data)
+
+            except AttributeError:
+                pass
 
         try:
             # Start Update info Playlist
@@ -189,6 +198,9 @@ class PlayListCrawl:
                     doc['owner_id'],
                     doc['playlist_id']
                 )
+                if not result:
+                    return
+
                 followers = result.get('followers', {}).get('total', 0)
                 _update = {
                     'modified_date': datetime.datetime.now(),
@@ -204,8 +216,9 @@ class PlayListCrawl:
                 )
 
                 if followers >= FOLLOWERS_CONDS:
-                    print 11111
+                    print 1111
                     if 'tracks' in result:
+                        print 44
                         doc['followers'] = followers
                         doc['description'] = result.get('description', '')
                         if result['tracks'].get('items', []):
@@ -240,68 +253,75 @@ class PlayListCrawl:
             if not self.allow_time():
                 return
             if expected >= doc['turn_date']:
-                # Generate new token
-                sp = self.fetch_sp()
-                response = sp.search(
-                    q=doc['word'],
-                    limit=50,
-                    type='playlist',
-                    offset=0
-                )
+                response = None
 
-            elif doc['loop'] < doc['loops']:
-                # Generate new token
-                sp = self.fetch_sp()
-                response = sp.search(
-                    q=doc['word'],
-                    limit=50,
-                    type='playlist',
-                    offset=(50 * int(doc['loop']))
-                )
+                if doc['loop'] <= 1:
+                    sp = self.fetch_sp()
+                    response = sp.search(
+                        q=doc['word'],
+                        limit=50,
+                        type='playlist',
+                        offset=0
+                    )
+
+                elif doc['loop'] < doc['loops']:
+                    # Generate new token
+                    sp = self.fetch_sp()
+                    response = sp.search(
+                        q=doc['word'],
+                        limit=50,
+                        type='playlist',
+                        offset=(50 * int(doc['loop']))
+                    )
+
+                if response and ('playlists' in response):
+                    doc['total'] = response['playlists'].get('total', 0)
+                    doc['loops'] = int(ceil(doc['total'] / 50.0))
+                    doc['turn_date'] = now
+                    doc['loop'] = 1
+                    cursor.keywords.update_one(
+                        {'_id': doc['_id']},
+                        {'$set': doc}
+                    )
+                    self.save_to_db(response['playlists'].get('items', []))
+
+                    one = response is not None
+                    loop_counter = 0
+
+                    if not response['playlists']:
+                        response['playlists'] = {}
+
+                    while one and response.get('playlists', {}).get('next', ''):
+                        if loop_counter >= 5:
+                            break
+                        else:
+                            loop_counter += 1
+
+                        if not self.allow_time():
+                            return
+
+                        try:
+                            sp = self.fetch_sp()
+                            response = sp.next(response['playlists'])
+                            doc['turn_date'] = now
+                            doc['loop'] += 1
+                            cursor.keywords.update_one(
+                                {'_id': doc['_id']},
+                                {'$set': doc}
+                            )
+                            self.save_to_db(
+                                response.get('playlists', {}).get('items', [])
+                            )
+                        except SpotifyException:
+                            toLog(traceback.format_exc(), 'error')
+                            continue
+
+                        except:
+                            toLog(traceback.format_exc(), 'error')
+
             else:
-                toLog("Error while loop: {}".format(doc), 'error')
+                toLog("Out of turn date: {}".format(doc), 'error')
                 continue
-
-            if 'playlists' in response:
-                doc['total'] = response['playlists'].get('total', 0)
-                doc['loops'] = int(ceil(doc['total'] / 50.0))
-                doc['turn_date'] = now
-                doc['loop'] = 1
-                cursor.keywords.update_one(
-                    {'_id': doc['_id']},
-                    {'$set': doc}
-                )
-                self.save_to_db(response['playlists'].get('items', []))
-
-                one = response.get('playlists', {}) is not None
-                loop_counter = 0
-                while one and response('playlists', {}).get('next', ''):
-                    if loop_counter == 5:
-                        break
-
-                    if not self.allow_time():
-                        return
-
-                    try:
-                        sp = self.fetch_sp()
-                        response = sp.next(response['playlists'])
-                        doc['turn_date'] = now
-                        doc['loop'] += 1
-                        cursor.keywords.update_one(
-                            {'_id': doc['_id']},
-                            {'$set': doc}
-                        )
-                        self.save_to_db(
-                            response['playlists'].get('items', [])
-                        )
-                    except SpotifyException:
-                        toLog(traceback.format_exc(), 'error')
-                        continue
-
-                    except:
-                        toLog(traceback.format_exc(), 'error')
-
-                    loop_counter += 1
 
     def ensure_indexes(self):
         cursor.yesterday.create_index(
