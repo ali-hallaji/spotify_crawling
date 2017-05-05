@@ -45,11 +45,9 @@ class PlayListCrawl:
             return True
 
     def save_tracks(self, tracks, pl):
-        print 1
         for per, track in enumerate(tracks, 1):
             doc = {}
             if 'track' in track and track['track']:
-                print 2
 
                 artists = ""
                 for artist in track['track'].get('artists', []):
@@ -80,7 +78,6 @@ class PlayListCrawl:
                 doc['song_id'] = track['track'].get('id', '')
 
                 try:
-                    print 2222
                     cursor.tracks.insert(doc)
                     self.check_history(doc)
                 except:
@@ -216,9 +213,7 @@ class PlayListCrawl:
                 )
 
                 if followers >= FOLLOWERS_CONDS:
-                    print 1111
                     if 'tracks' in result:
-                        print 44
                         doc['followers'] = followers
                         doc['description'] = result.get('description', '')
                         if result['tracks'].get('items', []):
@@ -254,26 +249,32 @@ class PlayListCrawl:
                 return
 
             if expected >= doc['turn_date']:
-                response = None
+                sp = self.fetch_sp()
+                response = sp.search(
+                    q=doc['word'],
+                    limit=50,
+                    type='playlist',
+                    offset=0
+                )
 
-                if doc['loop'] <= 1:
-                    sp = self.fetch_sp()
-                    response = sp.search(
-                        q=doc['word'],
-                        limit=50,
-                        type='playlist',
-                        offset=0
-                    )
+                # if doc['loop'] <= 1:
+                #     sp = self.fetch_sp()
+                #     response = sp.search(
+                #         q=doc['word'],
+                #         limit=50,
+                #         type='playlist',
+                #         offset=0
+                #     )
 
-                elif doc['loop'] < doc['loops']:
-                    # Generate new token
-                    sp = self.fetch_sp()
-                    response = sp.search(
-                        q=doc['word'],
-                        limit=50,
-                        type='playlist',
-                        offset=(50 * int(doc['loop']))
-                    )
+                # elif doc['loop'] < doc['loops']:
+                #     # Generate new token
+                #     sp = self.fetch_sp()
+                #     response = sp.search(
+                #         q=doc['word'],
+                #         limit=50,
+                #         type='playlist',
+                #         offset=(50 * int(doc['loop']))
+                #     )
 
                 if response:
                     doc['total'] = response['playlists'].get('total', 0)
@@ -293,7 +294,7 @@ class PlayListCrawl:
                         response['playlists'] = {}
 
                     while one and response.get('playlists', {}).get('next', ''):
-                        if loop_counter >= 5:
+                        if loop_counter >= 2:
                             break
                         else:
                             loop_counter += 1
