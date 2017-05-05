@@ -6,6 +6,7 @@ from math import ceil
 from pymongo import ASCENDING
 from pymongo import DESCENDING
 from spotipy.client import SpotifyException
+from pymongo.errors import DuplicateKeyError
 
 # Core Services import
 from core import toLog
@@ -80,6 +81,8 @@ class PlayListCrawl:
                 try:
                     cursor.tracks.insert(doc)
                     self.check_history(doc)
+                except DuplicateKeyError:
+                    pass
                 except:
                     toLog(traceback.format_exc(), 'error')
 
