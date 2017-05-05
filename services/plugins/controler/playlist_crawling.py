@@ -67,6 +67,7 @@ class PlayListCrawl:
                 doc['playlist_owner'] = pl['owner_id']
                 doc['playlist_href'] = pl['external_url']
                 doc['playlist_id'] = pl['playlist_id']
+                doc['song_id'] = track['track'].get('id', '')
                 doc['playlist_description'] = pl['description']
                 doc['artist'] = artists.strip()
                 doc['href'] = href
@@ -75,7 +76,6 @@ class PlayListCrawl:
                 doc['popularity'] = track['track'].get('popularity', 0)
                 doc['isrc'] = isrc
                 doc['allbum'] = track['track'].get('album', {}).get('name', '')
-                doc['song_id'] = track['track'].get('id', '')
 
                 try:
                     cursor.tracks.insert(doc)
@@ -331,6 +331,10 @@ class PlayListCrawl:
         )
         cursor.tracks.create_index(
             [('playlist_id', DESCENDING), ('song_id', ASCENDING)]
+        )
+        cursor.tracks.create_index(
+            [("playlist_id", DESCENDING), ("song_id", DESCENDING)],
+            unique=True
         )
 
     @asynchronous
