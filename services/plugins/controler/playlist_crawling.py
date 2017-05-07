@@ -293,7 +293,9 @@ class PlayListCrawl:
                     one = response is not None
                     loop_counter = 0
 
-                    if not response['playlists']:
+                    if 'playlists' not in  response:
+                        response['playlists'] = {}
+                    elif not response['playlists']:
                         response['playlists'] = {}
 
                     while one and response.get('playlists', {}).get('next', ''):
