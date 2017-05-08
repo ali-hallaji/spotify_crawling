@@ -1,5 +1,3 @@
-from cerberus import Validator
-
 
 pi_schema = {
     'next': {
