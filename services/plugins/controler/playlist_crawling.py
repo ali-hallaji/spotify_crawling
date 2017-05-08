@@ -5,6 +5,7 @@ import traceback
 from math import ceil
 from pymongo import ASCENDING
 from pymongo import DESCENDING
+from cerberus import Validator
 from spotipy.client import SpotifyException
 from pymongo.errors import DuplicateKeyError
 
@@ -17,6 +18,7 @@ from config.settings import PLAYLIST_EXPIRE_TIME as PX
 from config.settings import FOLLOWERS_CONDS
 from services.libs.async_call import asynchronous
 from services.plugins.controler.libs.utils import gen_sp
+from services.plugins.controler.libs.data_validation import p_schema
 
 
 @register
@@ -289,16 +291,10 @@ class PlayListCrawl:
                         {'$set': doc}
                     )
                     self.save_to_db(response['playlists'].get('items', []))
-
-                    one = response is not None
                     loop_counter = 0
 
-                    if 'playlists' not in  response:
-                        response['playlists'] = {}
-                    elif not response['playlists']:
-                        response['playlists'] = {}
-
-                    while one and response.get('playlists', {}).get('next', ''):
+                    _val = Validator(p_schema)
+                    while _val.validate(response) and response.get('playlists', {}).get('next', ''):
                         if loop_counter >= 2:
                             break
                         else:
