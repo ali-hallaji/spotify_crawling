@@ -175,7 +175,7 @@ class PlayListCrawl:
 
     def move_to_yesterday(self):
         cursor.yesterday.delete_many({})
-        data = cursor.tracks.find({}, {'_id': 0})
+        data = cursor.tracks.find({}, {'_id': 0}, no_cursor_timeout=True)
         for doc in data:
             cursor.yesterday.insert(doc)
         cursor.tracks.delete_many({})
@@ -247,7 +247,7 @@ class PlayListCrawl:
         now = datetime.datetime.now()
         expected = now - datetime.timedelta(days=KEYWORD_DAYS)
         criteria = {}
-        keywords = cursor.keywords.find(criteria)
+        keywords = list(cursor.keywords.find(criteria))
 
         for doc in keywords:
             if not self.allow_time():
