@@ -177,6 +177,7 @@ class PlayListCrawl:
         cursor.yesterday.delete_many({})
         data = cursor.tracks.find({}, {'_id': 0}, no_cursor_timeout=True)
         for doc in data:
+            doc.pop('_id')
             cursor.yesterday.insert(doc)
         cursor.tracks.delete_many({})
         self.ensure_indexes()
