@@ -180,6 +180,7 @@ class PlayListCrawl:
         while data:
             data.pop('_id')
             cursor.yesterday.insert(data)
+            data = cursor.tracks.find_one_and_delete({})
 
         self.ensure_indexes()
         return True
