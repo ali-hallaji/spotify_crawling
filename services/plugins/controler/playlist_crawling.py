@@ -283,48 +283,52 @@ class PlayListCrawl:
                 #         type='playlist',
                 #         offset=(50 * int(doc['loop']))
                 #     )
+                try:
 
-                if response:
-                    doc['total'] = response['playlists'].get('total', 0)
-                    doc['loops'] = int(ceil(doc['total'] / 50.0))
-                    doc['turn_date'] = now
-                    doc['loop'] = 1
-                    cursor.keywords.update_one(
-                        {'_id': doc['_id']},
-                        {'$set': doc}
-                    )
-                    self.save_to_db(response['playlists'].get('items', []))
-                    loop_counter = 0
+                    if response:
+                        doc['total'] = response['playlists'].get('total', 0)
+                        doc['loops'] = int(ceil(doc['total'] / 50.0))
+                        doc['turn_date'] = now
+                        doc['loop'] = 1
+                        cursor.keywords.update_one(
+                            {'_id': doc['_id']},
+                            {'$set': doc}
+                        )
+                        self.save_to_db(response['playlists'].get('items', []))
+                        loop_counter = 0
 
-                    _val = Validator(p_schema)
-                    while _val.validate(response) and response.get('playlists', {}).get('next', ''):
-                        if loop_counter >= 2:
-                            break
-                        else:
-                            loop_counter += 1
+                        _val = Validator(p_schema)
+                        while _val.validate(response) and response.get('playlists', {}).get('next', ''):
+                            if loop_counter >= 2:
+                                break
+                            else:
+                                loop_counter += 1
 
-                        if not self.allow_time():
-                            return
+                            if not self.allow_time():
+                                return
 
-                        try:
-                            sp = self.fetch_sp()
-                            response = sp.next(response['playlists'])
-                            doc['turn_date'] = now
-                            doc['loop'] += 1
-                            cursor.keywords.update_one(
-                                {'_id': doc['_id']},
-                                {'$set': doc}
-                            )
-                            self.save_to_db(
-                                response.get('playlists', {}).get('items', [])
-                            )
-                        except SpotifyException:
-                            toLog(traceback.format_exc(), 'error')
-                            continue
+                            try:
+                                sp = self.fetch_sp()
+                                response = sp.next(response['playlists'])
+                                doc['turn_date'] = now
+                                doc['loop'] += 1
+                                cursor.keywords.update_one(
+                                    {'_id': doc['_id']},
+                                    {'$set': doc}
+                                )
+                                self.save_to_db(
+                                    response.get('playlists', {}).get('items', [])
+                                )
+                            except SpotifyException:
+                                toLog(traceback.format_exc(), 'error')
+                                continue
 
-                        except:
-                            toLog(traceback.format_exc(), 'error')
-
+                            except:
+                                toLog(traceback.format_exc(), 'error')
+                  
+                except Exception as e:
+                    toLog("Unxpected Error: {}".format(str(e)), 'error')
+            
             else:
                 toLog("Out of turn date: {}".format(doc), 'error')
                 continue
